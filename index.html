@@ -1,13 +1,96 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vite App</title>
+    </head>
+    <body>
+        <div id="app">
+            <div id="canvas-container2">
+                <div id="player-list"><div>Place Holder</div></div>
+                <div id="canvas-container">
+                    <canvas></canvas>
+                </div>
+            </div>
+            <div class="control-group-container">
+                <div class="control-group">
+                    <h3>Load Demo</h3>
+                    <label for="demoFileInput">Upload .dem File:</label>
+                    <input type="file" id="demoFileInput" accept=".dem" />
+                    <div
+                        id="loadingIndicator"
+                        style="display: none; color: blue"
+                    >
+                        Parsing demo...
+                    </div>
+                </div>
+                <div class="control-group">
+                    <div class="player">
+                        <h3>Replay Controls</h3>
+                        <div class="player__seeker">
+                            <input
+                                type="range"
+                                id="replaySlider"
+                                value="1"
+                                min="1"
+                                max="100"
+                            />
+                            <label for="replaySlider">
+                                <div>
+                                    Tick: <span id="currentTick">1</span> /
+                                    <span id="maxTick">?</span>
+                                </div>
+                                <div>
+                                    Time:
+                                    <span id="currentTickTime">0:00</span> /
+                                    <span id="maxTickTime">?</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <br />
+                        <button id="playPauseBtn">Play</button>
+                        <button id="slowDownBtn">Slow Down</button>
+                        <span id="playbackSpeed">1x</span>
+                        <button id="speedUpBtn">Speed Up</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3>Camera Controls</h3>
+                    <label for="translateX">Pan X:</label>
+                    <input type="range" id="translateX" value="0" />
+                    <span id="translateXValue">0</span> px
+                    <br />
+                    <label for="translateY">Pan Y:</label>
+                    <input type="range" id="translateY" value="0" />
+                    <span id="translateYValue">0</span> px
+                    <br />
+                    <label for="scaleFactor">Zoom:</label>
+                    <input
+                        type="range"
+                        id="scaleFactor"
+                        min="0.05"
+                        max="5.0"
+                        step="0.05"
+                        value="0.5"
+                    />
+                    <span id="scaleFactorValue">0.5</span> x
+                </div>
+                <div class="control-group">
+                    <h3>Debug Point</h3>
+                    <label for="debugX">Debug X (World):</label>
+                    <input type="number" step="100" id="debugX" value="0" />
+                    <span id="debugXValue">0</span>
+                    <br />
+                    <label for="debugY">Debug Y (World):</label>
+                    <input type="number" step="100" id="debugY" value="0" />
+                    <span id="debugYValue">0</span>
+                </div>
+            </div>
+        </div>
+        <script src="./public/pkg/demoparser2.js" defer></script>
+        <script type="module" src="/src/orchestrator.js" defer></script>
+    </body>
 </html>

@@ -1,5 +1,9 @@
 # Test Demo
 cs2demo
+test/* 
+demoparser-local
+Unused
+
 # Logs
 logs
 *.log
