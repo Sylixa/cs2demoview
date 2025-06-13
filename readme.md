@@ -21,8 +21,13 @@ This project utilizes open-source code and data from the following projects, and
     -   [GitHub Repository](https://github.com/LaihoE/demoparser)
     -   The robust demo parsing capabilities are based on the code from `demoparser`, enabling the extraction of game events and player movements from CS2 demo files.
 
-Their work has been essential in enabling the creation of this tool.
+Their work has been essential in enabling the creation of this tool. Thanks :3
 
 ## Live Demo (Coming Soon!)
 
 I'm currently working on getting a live version of the viewer hosted. As soon as it's up and running, you'll find the link right here: [sylixa.github.io/cs2demoview](https://sylixa.github.io/cs2demoview/)
+
+### Side note
+
+Only supports de_train for now (because I used train as my test map in development), but I'll be adding more maps soon.
+There are also tons of issues with the app, and a few optimizations to be made.

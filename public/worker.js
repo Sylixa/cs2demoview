@@ -1,13 +1,18 @@
+// const prefix = self.location.pathname.replace(/\/[^/]*$/, ''); // remove last part (e.g., /worker.js)
+// const base = self.location.origin + prefix + '/pkg';
+// console.log('WORKER.JS: Base path ', base);
+
 console.log('WORKER.JS: Script started executing.');
-importScripts('../public/pkg/demoparser2.js');
+importScripts('/cs2demoview/pkg/demoparser2.js');
 console.log('WORKER.JS: demoparser2.js imported.');
+
 // wasm_bindgen is made available globally in the worker's scope after importScripts.
 const { parseEvents, parseTicks } = wasm_bindgen;
 
 // This function loads the actual .wasm binary file into the worker.
 // Each worker thread needs to load its own instance of the WASM binary.
 async function run_in_worker() {
-    await wasm_bindgen('../public/pkg/demoparser2_bg.wasm');
+    await wasm_bindgen('/cs2demoview/pkg/demoparser2_bg.wasm');
     console.log(
         'WORKER.JS: WASM binary loaded successfully. Rust functions are now available.'
     );

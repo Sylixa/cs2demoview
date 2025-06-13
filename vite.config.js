@@ -3,7 +3,7 @@ import wasm from 'vite-plugin-wasm';
 import topLevelAwait from 'vite-plugin-top-level-await';
 
 export default defineConfig({
-    base: '/cs2WebDemoViewer/',
+    base: '/cs2demoview/',
     // plugins: [wasm(), topLevelAwait()],
     optimizeDeps: {
         // exclude: ['demoparser2'],

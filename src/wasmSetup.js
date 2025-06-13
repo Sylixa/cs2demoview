@@ -17,7 +17,10 @@ export async function initMainThreadWasm() {
     }
 
     try {
-        await wasmBindgen('./public/pkg/demoparser2_bg.wasm');
+        const wasmBinaryPath = `${
+            import.meta.env.BASE_URL
+        }pkg/demoparser2_bg.wasm`;
+        await wasmBindgen(wasmBinaryPath);
         console.log('WASM.JS: Main thread WASM binary loaded successfully.');
     } catch (e) {
         console.error('Failed to load WASM binary in main thread:', e);

@@ -1,6 +1,21 @@
 // import './style.css';
 import './style/index.css';
 
+// 1. Dynamically load demoparser2.js
+await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `${import.meta.env.BASE_URL}pkg/demoparser2.js`;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+});
+
+// 2. Now that wasm_bindgen is defined, initialize it
+await wasm_bindgen(`${import.meta.env.BASE_URL}pkg/demoparser2_bg.wasm`);
+
+// 3. Now it's safe to use wasm_bindgen, or call things that depend on it
+console.log('WASM module initialized');
+
 import { drawObjects } from './renderer.js';
 import {
     convertCordsGameToRadar,
@@ -12,7 +27,12 @@ import { initMainThreadWasm } from './wasmSetup.js';
 
 // --- WASM Worker Setup ---
 console.log('MAIN.JS: Attempting to create new Worker with path:');
-const demoWorker = new Worker('./src/worker.js');
+
+// const demoWorker = new Worker('./src/worker.js');
+const demoWorker = new Worker(new URL('/worker.js', import.meta.url), {
+    type: 'classic',
+});
+
 console.log('MAIN.JS: Worker constructor called.');
 // const demoWorker = 'a';
 
@@ -89,6 +109,10 @@ demoWorker.onmessage = e => {
     loadingIndicator.style.display = 'none';
 };
 
+demoWorker.onerror = function (e) {
+    console.error('MAIN.JS: Worker error:', e);
+};
+
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 const canvasContainer = document.getElementById('canvas-container');
@@ -121,7 +145,7 @@ let lastMouseY;
 
 // NO Map loader yet
 let mapImage = new Image();
-mapImage.src = './public/maps/de_train/radar.png';
+mapImage.src = `${import.meta.env.BASE_URL}maps/de_train/radar.png`;
 
 mapImage.onload = () => {
     console.log('MAIN.JS: Map image loaded.');
