@@ -1,0 +1,25 @@
+{
+    "version": {
+        "radar": 1,
+        "format": 3
+    },
+
+    "resolution": 5.25,
+
+    "offset": {
+        "x": 2830,
+        "y": 2030
+    },
+
+    "splits": [],
+
+    "advisoryPosition": {
+        "x": 76,
+        "y": 12
+    },
+
+    "zRange": {
+        "min": -85,
+        "max": 180
+    }
+}
