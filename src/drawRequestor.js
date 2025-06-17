@@ -49,7 +49,9 @@ export const drawNameConstructor = (
     fontSize,
     font,
     lineWidth,
-    colorStroke
+    colorStroke,
+    colorFill,
+    textContent
 ) => {
     return {
         type: 'text',
@@ -58,6 +60,8 @@ export const drawNameConstructor = (
         fontSize: fontSize,
         font: font,
         lineWidth: lineWidth,
-        colorFill: colorStroke,
+        colorStroke: colorStroke,
+        colorFill: colorFill,
+        textContent: textContent,
     };
 };

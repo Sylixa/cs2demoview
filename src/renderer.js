@@ -14,6 +14,24 @@ const drawPoint = (
     ctx.stroke();
 };
 
+const drawText = (
+    ctx,
+    textX,
+    textY,
+    fontSize = '16px',
+    font = 'system-ui',
+    lineWidth = 2,
+    colorStroke,
+    colorFill,
+    textContent
+) => {
+    ctx.font = `${fontSize} "${font}"`;
+    ctx.fillStyle = colorFill;
+    ctx.lineWidth = lineWidth;
+    ctx.textAlign = 'center';
+    ctx.fillText(textContent, textX - 20, textY - 20);
+};
+
 // Function to draw the single box on the canvas
 export function drawObjects(
     ctx,
@@ -57,14 +75,31 @@ export function drawObjects(
     ctx.stroke();
 
     for (const obj of drawQueue) {
-        drawPoint(
-            ctx,
-            obj.x,
-            obj.y,
-            obj.radius,
-            obj.colorStroke,
-            obj.colorFill
-        );
+        if (!Object.values(obj).includes('type')) {
+        }
+        if (obj.type === 'dot') {
+            drawPoint(
+                ctx,
+                obj.x,
+                obj.y,
+                obj.radius,
+                obj.colorStroke,
+                obj.colorFill
+            );
+        }
+        if (obj.type === 'text') {
+            drawText(
+                ctx,
+                obj.x,
+                obj.y,
+                obj.fontSize,
+                obj.font,
+                obj.lineWidth,
+                obj.colorStroke,
+                obj.colorFill,
+                obj.textContent
+            );
+        }
     }
 
     ctx.beginPath();

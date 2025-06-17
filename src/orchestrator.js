@@ -467,14 +467,14 @@ function mainRenderLoop(currentTime) {
         switch (pt) {
             case 2: // CT = 2
                 teamColor = {
-                    stroke: 'darkblue',
-                    fill: 'blue',
+                    stroke: '#79ADDE', //lightblue
+                    fill: '#2F5C92', //blue
                 };
                 break;
             case 3: // T = 3
                 teamColor = {
-                    stroke: 'yellow',
-                    fill: 'orange',
+                    stroke: '#FFD150', //yellow
+                    fill: '#FFA336', //orange
                 };
                 break;
         }
@@ -495,7 +495,9 @@ function mainRenderLoop(currentTime) {
                 '16px',
                 'Arial',
                 2,
-                'blue'
+                teamColor.stroke,
+                teamColor.fill,
+                playerTeam.filter(obj => obj.sid === item.sid)[0].name
             )
         );
     });
