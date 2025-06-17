@@ -4,6 +4,8 @@ test/*
 demoparser-local
 Unused
 
+*.dem
+
 # Logs
 logs
 *.log

@@ -1,7 +1,6 @@
 // import './style.css';
 import './style/index.css';
 
-// 1. Dynamically load demoparser2.js
 await new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = `${import.meta.env.BASE_URL}pkg/demoparser2.js`;
@@ -10,31 +9,32 @@ await new Promise((resolve, reject) => {
     document.head.appendChild(script);
 });
 
-// 2. Now that wasm_bindgen is defined, initialize it
 await wasm_bindgen(`${import.meta.env.BASE_URL}pkg/demoparser2_bg.wasm`);
 
-// 3. Now it's safe to use wasm_bindgen, or call things that depend on it
 console.log('WASM module initialized');
 
 import { drawObjects } from './renderer.js';
 import {
     convertCordsGameToRadar,
+    drawNameConstructor,
     drawQueueConstructor,
 } from './drawRequestor.js';
 import { initDebug } from './debug.js';
 import * as replayDataManager from './replayManager.js';
 import { initMainThreadWasm } from './wasmSetup.js';
-
+import { requestDemo } from './subtask.js';
+import { getMapData } from './loadMapAssets.js';
+import { prepareData } from './utils/filterTeamTick.js';
+import { coloringTeam } from './utils/coloringTeam.js';
 // --- WASM Worker Setup ---
 console.log('MAIN.JS: Attempting to create new Worker with path:');
 
 // const demoWorker = new Worker('./src/worker.js');
-const demoWorker = new Worker(new URL('/worker.js', import.meta.url), {
-    type: 'classic',
-});
+// const demoWorker = new Worker(new URL('/worker.js', import.meta.url), {
+//     type: 'classic',
+// });
 
 console.log('MAIN.JS: Worker constructor called.');
-// const demoWorker = 'a';
 
 const demoFileInput = document.getElementById('demoFileInput');
 const loadingIndicator = document.getElementById('loadingIndicator');
@@ -49,9 +49,9 @@ let lastFrameTime = 0; // For accurate time-based tick progressionlastFrameTime 
 // --- Global Drawing Queue ---
 const mainGameDrawQueue = [
     //Test
-    drawQueueConstructor(300, 300, 20, 'red', 'darkred'),
-    drawQueueConstructor(1500, 500, 25, 'blue', 'darkblue'),
-    drawQueueConstructor(800, 1800, 30, 'purple', 'darkpurple'),
+    // drawQueueConstructor(300, 300, 20, 'red', 'darkred'),
+    // drawQueueConstructor(1500, 500, 25, 'blue', 'darkblue'),
+    // drawQueueConstructor(800, 1800, 30, 'purple', 'darkpurple'),
 ];
 
 console.log(
@@ -61,6 +61,49 @@ console.log(
 
 initDebug(mainGameDrawQueue);
 
+let mapImage = new Image();
+let mapMeta = null;
+let halfMarker = null;
+let playerTeam = null;
+let teamSwitch = false;
+const seenTick = new Set();
+// mapImage.src = `${import.meta.env.BASE_URL}maps/de_train/radar.png`;
+
+// mapImage.onload = () => {
+//     console.log('MAIN.JS: Map image loaded.');
+// };
+
+//Array[Map()] -> Map(Object{})
+const mapRepacker = (arr, keySearch) => {
+    let keyExist = false;
+    let tmpMap = new Map();
+    let tmpObj = {};
+    let keyV = null;
+
+    for (let i = 0; i < arr.length; i++) {
+        keyExist = false;
+        tmpObj = {};
+        for (const [key, value] of arr[i]) {
+            // console.log(`${key}: ${value}`);
+            if (keySearch === key) {
+                keyExist = true;
+                keyV = value;
+            }
+
+            tmpObj[key] = value;
+        }
+        if (!keyExist) {
+            console.error(
+                `MAIN.JS-Error: The required key "${keySearch}" was not found in the Map at index ${i}. Returning null.`
+            );
+            return null;
+        }
+
+        tmpMap.set(keyV, tmpObj);
+    }
+    return tmpMap;
+};
+
 // --- Handle Demo File Upload ---
 demoFileInput.addEventListener('change', async event => {
     const file = event.target.files[0];
@@ -69,49 +112,87 @@ demoFileInput.addEventListener('change', async event => {
     loadingIndicator.style.display = 'block';
     isPlaying = false;
     playPauseBtn.textContent = 'Play';
+    seenTick.clear();
 
-    const reader = new FileReader();
-    reader.onload = async e => {
-        const uint8Array = new Uint8Array(e.target.result);
-        console.log('MAIN.JS: Sending demo file to worker for parsing...');
+    try {
+        teamSwitch = false;
 
-        demoWorker.postMessage({
-            fileBytes: uint8Array,
-            fieldsToExtract: ['X', 'Y'],
-        });
-    };
-    reader.readAsArrayBuffer(file);
-});
+        playerTeam = await requestDemo(file, ['player_team'], 'event');
+        playerTeam = prepareData(playerTeam);
+        // playerTeam = mapRepacker(playerTeam, 'user_steamid');
 
-// --- Handle Message from Worker ---
-demoWorker.onmessage = e => {
-    const parsedData = e.data;
-    console.log('MAIN.JS: Received parsed data from worker:', parsedData);
-
-    const success = replayDataManager.loadReplay(parsedData);
-    if (success) {
-        currentReplayTick = replayDataManager.getMinTick();
-        replaySlider.min = replayDataManager.getMinTick();
-        replaySlider.max = replayDataManager.getMaxTick();
-        maxTickSpan.textContent = replayDataManager.getMaxTick();
-        maxTickTimeSpan.textContent = formatTime(
-            replayDataManager.getMaxTick()
+        halfMarker = await requestDemo(
+            file,
+            ['round_announce_last_round_half'],
+            'event'
         );
-        replaySlider.value = currentReplayTick;
-        updateTickDisplay();
 
-        console.log('MAIN.JS: Replay data successfully loaded into manager.');
-    } else {
-        console.error(
-            'MAIN.JS: Failed to load parsed data into replay manager.'
-        );
+        console.log('MAIN.JS: Player Team: ', playerTeam);
+        console.log('MAIN.JS: Half Marker: ', halfMarker);
+
+        const demoHeader = await requestDemo(file, [], 'header');
+        const assets = await getMapData(demoHeader);
+        mapImage = assets.image;
+        mapMeta = assets.metaData;
+
+        const parsedData = await requestDemo(file, [['X', 'Y']], 'tick');
+        console.log('MAIN.JS: Received parsed data from worker:', parsedData);
+        if (parsedData.type === 'error') {
+            console.warn(
+                'MAIN.JS: Demo worker report an error: ',
+                parsedData.reason
+            );
+            return;
+        }
+
+        const success = replayDataManager.loadReplay(parsedData);
+        if (success) {
+            currentReplayTick = replayDataManager.getMinTick();
+            replaySlider.min = replayDataManager.getMinTick();
+            replaySlider.max = replayDataManager.getMaxTick();
+            maxTickSpan.textContent = replayDataManager.getMaxTick();
+            maxTickTimeSpan.textContent = formatTime(
+                replayDataManager.getMaxTick()
+            );
+            replaySlider.value = currentReplayTick;
+            updateTickDisplay();
+
+            console.log(
+                'MAIN.JS: Replay data successfully loaded into manager.'
+            );
+        } else {
+            console.error(
+                'MAIN.JS: Failed to load parsed data into replay manager.'
+            );
+        }
+    } catch (err) {
+        console.warn('Demo worker reported an error:', err);
     }
     loadingIndicator.style.display = 'none';
-};
+    // const reader = new FileReader();
+    // reader.onload = async e => {
+    //     const uint8Array = new Uint8Array(e.target.result);
+    //     console.log('MAIN.JS: Sending demo file to worker for parsing...');
 
-demoWorker.onerror = function (e) {
-    console.error('MAIN.JS: Worker error:', e);
-};
+    //     demoWorker.postMessage({
+    //         requestId: -1,
+    //         fileBytes: uint8Array,
+    //         fieldsToExtract: [['X', 'Y']],
+    //         parseMethod: 'tick',
+    //     });
+    // };
+    // reader.readAsArrayBuffer(file);
+});
+
+// // --- Handle Message from Worker ---
+// demoWorker.onmessage = e => {
+//     console.log('!!!!!!: ', e);
+
+// };
+
+// demoWorker.onerror = function (e) {
+//     console.error('MAIN.JS: Worker error:', e);
+// };
 
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
@@ -142,14 +223,6 @@ let scaleFactor = 1.0;
 let isDragging = false;
 let lastMouseX;
 let lastMouseY;
-
-// NO Map loader yet
-let mapImage = new Image();
-mapImage.src = `${import.meta.env.BASE_URL}maps/de_train/radar.png`;
-
-mapImage.onload = () => {
-    console.log('MAIN.JS: Map image loaded.');
-};
 
 // --- UI Elements for Camera Controls ---
 const translateXInput = document.getElementById('translateX');
@@ -367,24 +440,62 @@ function mainRenderLoop(currentTime) {
     // Combine static objects and dynamic player objects for debug
     const currentDrawQueue = [...mainGameDrawQueue];
 
+    //!Grenade Render
+
+    //!Need to be fix, map is hard coded
+    //!Player drawing queue need to have color
     rawTickData.forEach(item => {
         let convertedPlayerPos = convertCordsGameToRadar(
             item.X,
             item.Y,
-            2730,
-            2360,
-            2.37,
-            2048,
-            2048
+            mapMeta.offset.x,
+            mapMeta.offset.y,
+            mapMeta.resolution / 2,
+            mapImage.naturalWidth,
+            mapImage.naturalHeight
         );
+        let teamColor = {
+            stroke: 'white',
+            fill: 'gray',
+        };
+
+        //! old_team for first half of matches
+        //! team for the second half of matches
+
+        let pt = coloringTeam(currentReplayTick, item.sid, playerTeam);
+
+        switch (pt) {
+            case 2: // CT = 2
+                teamColor = {
+                    stroke: 'darkblue',
+                    fill: 'blue',
+                };
+                break;
+            case 3: // T = 3
+                teamColor = {
+                    stroke: 'yellow',
+                    fill: 'orange',
+                };
+                break;
+        }
+
         currentDrawQueue.push(
             drawQueueConstructor(
                 convertedPlayerPos[0],
                 convertedPlayerPos[1],
                 10,
-                'yellow',
-                'orange'
-                // item.name
+                teamColor.stroke,
+                teamColor.fill
+            )
+        );
+        currentDrawQueue.push(
+            drawNameConstructor(
+                convertedPlayerPos[0],
+                convertedPlayerPos[1],
+                '16px',
+                'Arial',
+                2,
+                'blue'
             )
         );
     });

@@ -27,17 +27,37 @@ export const convertCordsGameToRadar = (
  * @returns {{x: number, y: number, radius: number, colorStroke: string, colorFill: string}}
  */
 export const drawQueueConstructor = (
-    localX,
-    localY,
+    posX,
+    posY,
     radius = 5,
     colorStroke,
     colorFill
 ) => {
     return {
-        x: localX,
-        y: localY,
+        type: 'dot',
+        x: posX,
+        y: posY,
         radius: radius,
         colorStroke: colorStroke,
         colorFill: colorFill,
+    };
+};
+
+export const drawNameConstructor = (
+    playerX,
+    playerY,
+    fontSize,
+    font,
+    lineWidth,
+    colorStroke
+) => {
+    return {
+        type: 'text',
+        x: playerX,
+        y: playerY,
+        fontSize: fontSize,
+        font: font,
+        lineWidth: lineWidth,
+        colorFill: colorStroke,
     };
 };
