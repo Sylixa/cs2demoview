@@ -25,7 +25,7 @@ Their work has been essential in enabling the creation of this tool. Thanks :3
 
 ## Live Demo
 
-Live Demo on Github(You need to provide your own demo): [sylixa.github.io/cs2demoview](https://sylixa.github.io/cs2demoview/)
+Live Demo on Github: [sylixa.github.io/cs2demoview](https://sylixa.github.io/cs2demoview/)
 
 ## TODO
 
