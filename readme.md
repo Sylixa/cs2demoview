@@ -1,4 +1,4 @@
-# CS2 2D Viewer
+# CS2 2D Viewer (Am no longer working on this for now)
 
 This project provides a standalone 2D viewer for Counter-Strike 2 (CS2) demos.
 
